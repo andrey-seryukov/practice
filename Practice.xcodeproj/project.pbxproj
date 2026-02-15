@@ -6,9 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		BA0000000000000000000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -20,24 +17,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		4A0000000000000000000001 /* Practice.app */ = {
-			isa = PBXFileReference;
-			explicitFileType = wrapper.application;
-			includeInIndex = 0;
-			path = Practice.app;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		4A0000000000000000000002 /* PracticeTests.xctest */ = {
-			isa = PBXFileReference;
-			explicitFileType = wrapper.cfbundle;
-			includeInIndex = 0;
-			path = PracticeTests.xctest;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
+		4A0000000000000000000001 /* Practice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Practice.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A0000000000000000000002 /* PracticeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PracticeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3A0000000000000000000002 /* Practice */ = {
@@ -70,7 +52,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		3A0000000000000000000001 /* root */ = {
+		3A0000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
 				3A0000000000000000000002 /* Practice */,
@@ -162,7 +144,7 @@
 				en,
 				Base,
 			);
-			mainGroup = 3A0000000000000000000001 /* root */;
+			mainGroup = 3A0000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3A0000000000000000000004 /* Products */;
