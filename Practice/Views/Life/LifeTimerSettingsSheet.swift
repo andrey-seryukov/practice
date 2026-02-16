@@ -1,84 +1,110 @@
 import SwiftUI
 
-struct LifeTimerSettingsSheet: View {
+enum LifeDurationPickerKind: Identifiable {
+    case total, minInterval, maxInterval
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .total: "Total Duration"
+        case .minInterval: "Minimum Interval"
+        case .maxInterval: "Maximum Interval"
+        }
+    }
+
+    var format: DurationFormat {
+        switch self {
+        case .total: .hoursMinutes
+        case .minInterval, .maxInterval: .minutesSeconds
+        }
+    }
+}
+
+struct LifeTimerSettingsForm: View {
+    @Bindable var settings: LifeTimerSettings
+    var onStart: () -> Void
+    @State private var activePicker: LifeDurationPickerKind?
+
+    var body: some View {
+        Form {
+            Section("Total Duration") {
+                DurationRow(title: "Duration", duration: settings.totalDuration, format: .hoursMinutes) {
+                    activePicker = .total
+                }
+            }
+
+            Section("Reminder Interval") {
+                DurationRow(title: "Minimum", duration: settings.minInterval, format: .minutesSeconds) {
+                    activePicker = .minInterval
+                }
+                DurationRow(title: "Maximum", duration: settings.maxInterval, format: .minutesSeconds) {
+                    activePicker = .maxInterval
+                }
+            }
+
+            Section("Sound") {
+                SoundPicker(title: "Start / Stop", selection: $settings.startStopSound)
+                SoundPicker(title: "Reminder", selection: $settings.reminderSound)
+            }
+
+            Section {
+                Button {
+                    onStart()
+                } label: {
+                    Text("Start")
+                        .frame(maxWidth: .infinity)
+                }
+                .font(.title2)
+            }
+        }
+        .sheet(item: $activePicker) { kind in
+            LifeDurationPickerSheet(kind: kind, settings: settings)
+                .presentationDetents([.fraction(1.0 / 3.0)])
+        }
+    }
+}
+
+private struct LifeDurationPickerSheet: View {
+    let kind: LifeDurationPickerKind
     @Bindable var settings: LifeTimerSettings
     @Environment(\.dismiss) private var dismiss
 
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Total Duration") {
-                    HourMinutePicker(title: "Duration", duration: $settings.totalDuration, maxHours: 12)
-                }
+    private var duration: Binding<TimeInterval> {
+        switch kind {
+        case .total: $settings.totalDuration
+        case .minInterval: $settings.minInterval
+        case .maxInterval: $settings.maxInterval
+        }
+    }
 
-                Section("Reminder Interval") {
-                    DurationPicker(title: "Minimum", duration: $settings.minInterval, range: 300...3600)
-                    DurationPicker(title: "Maximum", duration: $settings.maxInterval, range: 300...7200)
-                }
-            }
-            .navigationTitle("Life Timer Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+    var body: some View {
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                HStack {
+                    Text(kind.title)
+                        .font(.headline)
+                    Spacer()
                     Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
                 }
-            }
-        }
-    }
-}
+                .padding()
 
-struct DurationPicker: View {
-    let title: String
-    @Binding var duration: TimeInterval
-    var range: ClosedRange<TimeInterval> = 0...7200
+                Spacer()
 
-    var body: some View {
-        let minutes = Binding<Double>(
-            get: { duration / 60 },
-            set: { duration = $0 * 60 }
-        )
-
-        HStack {
-            Text(title)
-            Spacer()
-            Text("\(Int(minutes.wrappedValue)) min")
-                .foregroundStyle(.secondary)
-            Stepper("", value: minutes, in: (range.lowerBound / 60)...(range.upperBound / 60), step: 1)
-                .labelsHidden()
-        }
-    }
-}
-
-struct HourMinutePicker: View {
-    let title: String
-    @Binding var duration: TimeInterval
-    var maxHours: Int = 12
-
-    var body: some View {
-        let hours = Binding<Int>(
-            get: { Int(duration) / 3600 },
-            set: { duration = TimeInterval($0 * 3600 + Int(duration) % 3600) }
-        )
-        let minutes = Binding<Int>(
-            get: { (Int(duration) % 3600) / 60 },
-            set: { duration = TimeInterval(Int(duration) / 3600 * 3600 + $0 * 60) }
-        )
-
-        HStack {
-            Text(title)
-            Spacer()
-            Picker("Hours", selection: hours) {
-                ForEach(0...maxHours, id: \.self) { h in
-                    Text("\(h)h").tag(h)
+                Group {
+                    switch kind.format {
+                    case .hoursMinutes:
+                        HoursMinutesWheel(duration: duration)
+                    case .minutesSeconds:
+                        MinutesSecondsWheel(duration: duration)
+                    }
                 }
+                .frame(width: geometry.size.width * 0.67)
+
+                Spacer()
             }
-            .pickerStyle(.menu)
-            Picker("Minutes", selection: minutes) {
-                ForEach(Array(stride(from: 0, through: 55, by: 5)), id: \.self) { m in
-                    Text("\(m)m").tag(m)
-                }
-            }
-            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity)
         }
     }
 }

@@ -5,7 +5,7 @@ struct LifeTimerView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsItems: [LifeTimerSettings]
     @State private var timer = TimerEngine()
-    @State private var showSettings = false
+    @State private var reminderDates: [Date] = []
     @State private var nextReminderIn: TimeInterval = 0
 
     private var settings: LifeTimerSettings {
@@ -18,29 +18,10 @@ struct LifeTimerView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 40) {
-                Spacer()
-
-                Text(formatTime(settings.totalDuration))
-                    .font(.system(size: 64, weight: .thin, design: .monospaced))
-
-                TimerButton(style: .start) { startLifeTimer() }
-
-                Spacer()
+            LifeTimerSettingsForm(settings: settings) {
+                startLifeTimer()
             }
-            .navigationTitle("Life")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "slider.horizontal.3")
-                    }
-                }
-            }
-            .sheet(isPresented: $showSettings) {
-                LifeTimerSettingsSheet(settings: settings)
-            }
+            .navigationTitle("Living Practice")
             .onAppear {
                 ensureSettings()
             }
@@ -58,15 +39,19 @@ struct LifeTimerView: View {
                 .font(.system(size: 64, weight: .thin, design: .monospaced))
                 .contentTransition(.numericText())
 
-            if timer.state == .running {
+            if timer.state == .running, nextReminderIn > 0 {
                 Text("Next reminder in \(formatTime(nextReminderIn))")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
             }
 
             activeControls
 
             Spacer()
+        }
+        .onChange(of: timer.remainingTime) { _, _ in
+            updateNextReminderCountdown()
         }
     }
 
@@ -89,7 +74,13 @@ struct LifeTimerView: View {
             VStack(spacing: 16) {
                 Text("Time's Up")
                     .font(.title3)
-                TimerButton(style: .done) { timer.stop() }
+                TimerButton(style: .done) {
+                    SoundManager.shared.playSound(settings.startStopSound)
+                    timer.stop()
+                }
+            }
+            .onAppear {
+                SoundManager.shared.playSound(settings.startStopSound)
             }
 
         case .idle:
@@ -98,17 +89,22 @@ struct LifeTimerView: View {
     }
 
     private func startLifeTimer() {
+        SoundManager.shared.playSound(settings.startStopSound)
         timer.start(duration: settings.totalDuration)
         scheduleRandomReminders()
     }
 
     private func stopLifeTimer() {
+        SoundManager.shared.playSound(settings.startStopSound)
         timer.stop()
+        reminderDates = []
+        nextReminderIn = 0
         NotificationManager.shared.cancelAll()
     }
 
     private func scheduleRandomReminders() {
         NotificationManager.shared.cancelAll()
+        var dates: [Date] = []
         var elapsed: TimeInterval = 0
         let total = settings.totalDuration
 
@@ -123,10 +119,24 @@ struct LifeTimerView: View {
                 title: "Life Timer",
                 body: "Take a moment to be present."
             )
+            dates.append(fireDate)
+        }
 
-            if nextReminderIn == 0 {
-                nextReminderIn = gap
-            }
+        reminderDates = dates
+        updateNextReminderCountdown()
+    }
+
+    private func updateNextReminderCountdown() {
+        let now = Date()
+        let passed = reminderDates.filter { $0 <= now }
+        if !passed.isEmpty {
+            reminderDates.removeAll { $0 <= now }
+            SoundManager.shared.playSound(settings.reminderSound)
+        }
+        if let next = reminderDates.first {
+            nextReminderIn = next.timeIntervalSince(now)
+        } else {
+            nextReminderIn = 0
         }
     }
 
