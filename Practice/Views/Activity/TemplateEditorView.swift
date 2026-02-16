@@ -10,7 +10,7 @@ struct TemplateEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Template") {
+                Section("Preset") {
                     TextField("Name", text: $template.name)
                 }
 
@@ -53,7 +53,7 @@ struct TemplateEditorView: View {
                     }
                 }
             }
-            .navigationTitle("Edit Template")
+            .navigationTitle("Edit Preset")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

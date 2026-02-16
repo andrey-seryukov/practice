@@ -37,7 +37,7 @@ struct ActivityView: View {
                         .padding(.bottom, 32)
                 }
             }
-            .navigationTitle("Activity")
+            .navigationTitle("Moving Practice")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -81,7 +81,7 @@ struct ActivityView: View {
     }
 
     private var templatePicker: some View {
-        Picker("Template", selection: selectedTemplateID) {
+        Picker("Preset", selection: selectedTemplateID) {
             ForEach(templates) { template in
                 Text(template.name).tag(Optional(template.persistentModelID))
             }
@@ -96,9 +96,9 @@ struct ActivityView: View {
             Image(systemName: "figure.run")
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
-            Text("Select a template to begin")
+            Text("Select a preset to begin")
                 .foregroundStyle(.secondary)
-            Button("Browse Templates") { showTemplateList = true }
+            Button("Browse Presets") { showTemplateList = true }
         }
     }
 
@@ -219,15 +219,8 @@ struct ActivityView: View {
             ActivityInterval(name: "Cool-down", duration: 300, order: 2),
         ])
 
-        let chiGong = ActivityTemplate(name: "Chi Gong", intervals: [
-            ActivityInterval(name: "Warm-up", duration: 600, order: 0),
-            ActivityInterval(name: "Practice", duration: 1800, order: 1),
-            ActivityInterval(name: "Cool-down", duration: 300, order: 2),
-        ])
-
         modelContext.insert(hiit)
         modelContext.insert(yoga)
-        modelContext.insert(chiGong)
 
         selectedTemplate = hiit
     }

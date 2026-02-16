@@ -42,7 +42,7 @@ struct TemplateListView: View {
                     }
                 }
             }
-            .navigationTitle("Templates")
+            .navigationTitle("Presets")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -50,7 +50,7 @@ struct TemplateListView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        let newTemplate = ActivityTemplate(name: "New Template")
+                        let newTemplate = ActivityTemplate(name: "New Preset")
                         modelContext.insert(newTemplate)
                         editingTemplate = newTemplate
                     } label: {
