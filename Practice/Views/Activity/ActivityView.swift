@@ -24,18 +24,18 @@ struct ActivityView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
-                Spacer()
-
-                if let selectedTemplate {
-                    templateHeader(selectedTemplate)
-                    idleTimerDisplay
-                    TimerButton(style: .start) { startActivity() }
-                } else {
+            VStack(spacing: 0) {
+                if templates.isEmpty {
+                    Spacer()
                     noTemplateSelected
+                    Spacer()
+                } else {
+                    templatePicker
+                    intervalList(highlight: false)
+                    Spacer()
+                    TimerButton(style: .start) { startActivity() }
+                        .padding(.bottom, 32)
                 }
-
-                Spacer()
             }
             .navigationTitle("Activity")
             .toolbar {
@@ -53,6 +53,11 @@ struct ActivityView: View {
             .onAppear {
                 seedPresetsIfNeeded()
             }
+            .onChange(of: templates) {
+                if selectedTemplate == nil, let first = templates.first {
+                    selectedTemplate = first
+                }
+            }
         }
         .fullScreenCover(isPresented: .constant(isTimerActive)) {
             activityTimerScreen
@@ -64,28 +69,83 @@ struct ActivityView: View {
         }
     }
 
-    private var idleTimerDisplay: some View {
-        Text(formatTime(currentInterval?.duration ?? 0))
-            .font(.system(size: 64, weight: .thin, design: .monospaced))
+    // MARK: - Idle Components
+
+    private var templatePicker: some View {
+        Picker("Template", selection: $selectedTemplate) {
+            ForEach(templates) { template in
+                Text(template.name).tag(Optional(template))
+            }
+        }
+        .pickerStyle(.menu)
+        .padding(.horizontal)
+        .padding(.vertical, 8)
     }
 
-    private var activityTimerScreen: some View {
-        VStack(spacing: 32) {
-            Spacer()
+    private var noTemplateSelected: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "figure.run")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text("Select a template to begin")
+                .foregroundStyle(.secondary)
+            Button("Browse Templates") { showTemplateList = true }
+        }
+    }
 
-            if let selectedTemplate {
-                templateHeader(selectedTemplate)
+    // MARK: - Timer Screen
+
+    private var activityTimerScreen: some View {
+        VStack(spacing: 0) {
+            if let interval = currentInterval {
+                Text(interval.name)
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 32)
             }
 
             Text(formatTime(timer.remainingTime))
                 .font(.system(size: 64, weight: .thin, design: .monospaced))
                 .contentTransition(.numericText())
+                .padding(.vertical, 24)
 
-            activeControls
+            intervalList(highlight: true)
 
             Spacer()
+
+            activeControls
+                .padding(.bottom, 32)
         }
     }
+
+    // MARK: - Shared Interval List
+
+    private func intervalList(highlight: Bool) -> some View {
+        List {
+            ForEach(sortedIntervals) { interval in
+                intervalRow(interval: interval, isCurrent: highlight && interval.id == currentInterval?.id)
+            }
+        }
+        .listStyle(.plain)
+        .allowsHitTesting(!highlight)
+    }
+
+    private func intervalRow(interval: ActivityInterval, isCurrent: Bool) -> some View {
+        HStack {
+            Text(interval.name)
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(formatTime(interval.duration))
+                    .monospacedDigit()
+                Text(interval.sound)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .listRowBackground(isCurrent ? Color.accentColor.opacity(0.2) : nil)
+    }
+
+    // MARK: - Controls
 
     @ViewBuilder
     private var activeControls: some View {
@@ -107,28 +167,7 @@ struct ActivityView: View {
         }
     }
 
-    private func templateHeader(_ template: ActivityTemplate) -> some View {
-        VStack(spacing: 8) {
-            Text(template.name)
-                .font(.headline)
-            if let interval = currentInterval, timer.state != .idle {
-                Text(interval.name)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var noTemplateSelected: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "figure.run")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("Select a template to begin")
-                .foregroundStyle(.secondary)
-            Button("Browse Templates") { showTemplateList = true }
-        }
-    }
+    // MARK: - Actions
 
     private func startActivity() {
         guard let interval = currentInterval else { return }
@@ -152,7 +191,12 @@ struct ActivityView: View {
     }
 
     private func seedPresetsIfNeeded() {
-        guard templates.isEmpty else { return }
+        guard templates.isEmpty else {
+            if selectedTemplate == nil, let first = templates.first {
+                selectedTemplate = first
+            }
+            return
+        }
 
         let hiit = ActivityTemplate(name: "HIIT", intervals: [], isPreset: true)
         for round in 0..<8 {
@@ -175,6 +219,8 @@ struct ActivityView: View {
         modelContext.insert(hiit)
         modelContext.insert(yoga)
         modelContext.insert(chiGong)
+
+        selectedTemplate = hiit
     }
 
     private func formatTime(_ interval: TimeInterval) -> String {
