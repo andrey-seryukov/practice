@@ -1,39 +1,40 @@
 import SwiftUI
 
-struct MeditationSettingsSheet: View {
+struct MeditationSettingsForm: View {
     @Bindable var settings: MeditationSettings
-    @Environment(\.dismiss) private var dismiss
+    var onStart: () -> Void
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Duration") {
-                    DurationPicker(title: "Meditation", duration: $settings.duration, range: 60...7200)
-                    DurationPicker(title: "Warm-up", duration: $settings.warmupDuration, range: 0...300)
-                }
+        Form {
+            Section("Duration") {
+                DurationPicker(title: "Meditation", duration: $settings.duration, range: 60...7200)
+                DurationPicker(title: "Warm-up", duration: $settings.warmupDuration, range: 0...300)
+            }
 
-                Section("Intermediate Gong") {
-                    Toggle("Enable", isOn: hasIntermediateGong)
-                    if settings.intermediateGongInterval != nil {
-                        DurationPicker(
-                            title: "Interval",
-                            duration: intermediateGongBinding,
-                            range: 60...3600
-                        )
-                        SoundPicker(title: "Sound", selection: $settings.intermediateSound)
-                    }
-                }
-
-                Section("Sounds") {
-                    SoundPicker(title: "Start / End", selection: $settings.startEndSound)
+            Section("Intermediate Gong") {
+                Toggle("Enable", isOn: hasIntermediateGong)
+                if settings.intermediateGongInterval != nil {
+                    DurationPicker(
+                        title: "Interval",
+                        duration: intermediateGongBinding,
+                        range: 60...3600
+                    )
+                    SoundPicker(title: "Sound", selection: $settings.intermediateSound)
                 }
             }
-            .navigationTitle("Meditation Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+
+            Section("Sounds") {
+                SoundPicker(title: "Start / End", selection: $settings.startEndSound)
+            }
+
+            Section {
+                Button {
+                    onStart()
+                } label: {
+                    Text("Start")
+                        .frame(maxWidth: .infinity)
                 }
+                .font(.title2)
             }
         }
     }
@@ -52,6 +53,67 @@ struct MeditationSettingsSheet: View {
             get: { settings.intermediateGongInterval ?? 300 },
             set: { settings.intermediateGongInterval = $0 }
         )
+    }
+}
+
+// MARK: - Timer View
+
+struct MeditationTimerView: View {
+    var timer: TimerEngine
+    var settings: MeditationSettings
+    var onStop: () -> Void
+    var onFinished: () -> Void
+
+    var body: some View {
+        VStack(spacing: 40) {
+            Spacer()
+
+            Text(formatTime(timer.remainingTime))
+                .font(.system(size: 64, weight: .thin, design: .monospaced))
+                .contentTransition(.numericText())
+
+            controls
+
+            Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private var controls: some View {
+        switch timer.state {
+        case .running:
+            HStack(spacing: 40) {
+                Button("Pause") { timer.pause() }
+                Button("Stop", role: .destructive) { onStop() }
+            }
+            .font(.title2)
+
+        case .paused:
+            HStack(spacing: 40) {
+                Button("Resume") { timer.resume() }
+                Button("Stop", role: .destructive) { onStop() }
+            }
+            .font(.title2)
+
+        case .finished:
+            VStack(spacing: 16) {
+                Text("Session Complete")
+                    .font(.title3)
+                Button("Done") { onStop() }
+                    .font(.title2)
+            }
+            .onAppear { onFinished() }
+
+        case .idle:
+            EmptyView()
+        }
+    }
+
+    private func formatTime(_ interval: TimeInterval) -> String {
+        let total = max(0, Int(ceil(interval)))
+        let minutes = total / 60
+        let seconds = total % 60
+        return String(format: "%02d:%02d", minutes, seconds)
     }
 }
 
