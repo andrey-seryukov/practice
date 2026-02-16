@@ -55,26 +55,39 @@ struct MeditationTimerView: View {
     var onFinished: () -> Void
 
     var body: some View {
-        VStack(spacing: 40) {
-            Spacer()
+        ZStack {
+            // Fallback background color in case image doesn't load
+            Color(.systemBackground)
+                .ignoresSafeArea()
 
-            if phase == .warmup {
-                Text("Warm-up")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
+            // Background image
+            Image("screen")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .opacity(0.5)
+
+            VStack(spacing: 40) {
+                Spacer()
+
+                if phase == .warmup {
+                    Text("Warm-up")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text(formatTime(timer.remainingTime))
+                    .font(.system(size: 64, weight: .thin, design: .monospaced))
+                    .contentTransition(.numericText())
+
+                controls
+
+                Spacer()
             }
-
-            Text(formatTime(timer.remainingTime))
-                .font(.system(size: 64, weight: .thin, design: .monospaced))
-                .contentTransition(.numericText())
-
-            controls
-
-            Spacer()
-        }
-        .onChange(of: timer.state) { _, newState in
-            if newState == .finished {
-                onFinished()
+            .onChange(of: timer.state) { _, newState in
+                if newState == .finished {
+                    onFinished()
+                }
             }
         }
     }
