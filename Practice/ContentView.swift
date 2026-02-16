@@ -5,17 +5,17 @@ struct ContentView: View {
         TabView {
             MeditationView()
                 .tabItem {
-                    Label("Sit", systemImage: "bell")
+                    Label("Sit", systemImage: "figure.mind.and.body")
                 }
 
             ActivityView()
                 .tabItem {
-                    Label("Activity", systemImage: "figure.run")
+                    Label("Move", systemImage: "figure.yoga")
                 }
 
             LifeTimerView()
                 .tabItem {
-                    Label("Life", systemImage: "sparkles")
+                    Label("Live", systemImage: "sparkles")
                 }
 
             SettingsView()
