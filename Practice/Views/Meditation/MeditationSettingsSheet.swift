@@ -20,14 +20,11 @@ struct MeditationSettingsForm: View {
                 SoundPicker(title: "Start / End", selection: $settings.startEndSound)
             }
 
-            Section("Intermediate Gong") {
-                Toggle("Enable", isOn: hasIntermediateGong)
-                if settings.intermediateGongInterval != nil {
-                    DurationRow(title: "Interval", duration: settings.intermediateGongInterval ?? 300, format: .minutesSeconds) {
-                        activePicker = .intermediateGong
-                    }
-                    SoundPicker(title: "Sound", selection: $settings.intermediateSound)
+            Section("Interval Bell") {
+                DurationRow(title: "Interval", duration: settings.intermediateGongInterval, format: .minutesSeconds) {
+                    activePicker = .intermediateGong
                 }
+                SoundPicker(title: "Sound", selection: $settings.intermediateSound)
             }
 
             Section {
@@ -46,21 +43,6 @@ struct MeditationSettingsForm: View {
         }
     }
 
-    private var hasIntermediateGong: Binding<Bool> {
-        Binding(
-            get: { settings.intermediateGongInterval != nil },
-            set: { enabled in
-                settings.intermediateGongInterval = enabled ? 300 : nil
-            }
-        )
-    }
-
-    private var intermediateGongBinding: Binding<TimeInterval> {
-        Binding(
-            get: { settings.intermediateGongInterval ?? 300 },
-            set: { settings.intermediateGongInterval = $0 }
-        )
-    }
 }
 
 // MARK: - Timer View
@@ -165,6 +147,7 @@ struct DurationRow: View {
 
     private var formatted: String {
         let total = Int(duration)
+        if total == 0 { return "Off" }
         switch format {
         case .hoursMinutes:
             let h = total / 3600
@@ -190,10 +173,7 @@ struct DurationPickerSheet: View {
         case .warmup:
             $settings.warmupDuration
         case .intermediateGong:
-            Binding(
-                get: { settings.intermediateGongInterval ?? 300 },
-                set: { settings.intermediateGongInterval = $0 }
-            )
+            $settings.intermediateGongInterval
         }
     }
 
