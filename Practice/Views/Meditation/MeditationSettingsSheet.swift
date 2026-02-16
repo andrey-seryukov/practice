@@ -8,11 +8,11 @@ struct MeditationSettingsForm: View {
     var body: some View {
         Form {
             Section("Duration") {
-                DurationRow(title: "Meditation", duration: settings.duration, format: .hoursMinutes) {
-                    activePicker = .meditation
-                }
                 DurationRow(title: "Warm-up", duration: settings.warmupDuration, format: .minutesSeconds) {
                     activePicker = .warmup
+                }
+                DurationRow(title: "Meditation", duration: settings.duration, format: .hoursMinutes) {
+                    activePicker = .meditation
                 }
             }
 
@@ -185,22 +185,32 @@ struct DurationPickerSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text(kind.title)
-                    .font(.headline)
-                Spacer()
-                Button("Done") { dismiss() }
-                    .fontWeight(.semibold)
-            }
-            .padding()
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                HStack {
+                    Text(kind.title)
+                        .font(.headline)
+                    Spacer()
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+                .padding()
 
-            switch format {
-            case .hoursMinutes:
-                HoursMinutesWheel(duration: duration)
-            case .minutesSeconds:
-                MinutesSecondsWheel(duration: duration)
+                Spacer()
+
+                Group {
+                    switch format {
+                    case .hoursMinutes:
+                        HoursMinutesWheel(duration: duration)
+                    case .minutesSeconds:
+                        MinutesSecondsWheel(duration: duration)
+                    }
+                }
+                .frame(width: geometry.size.width * 0.67)
+
+                Spacer()
             }
+            .frame(maxWidth: .infinity)
         }
     }
 }
