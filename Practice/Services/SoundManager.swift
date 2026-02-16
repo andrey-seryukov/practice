@@ -6,9 +6,12 @@ final class SoundManager: @unchecked Sendable {
     private var player: AVAudioPlayer?
 
     static let availableSounds: [String] = [
-        "bell",
         "gong",
-        "chime",
+        "bell-1",
+        "bell-2",
+        "bell-3",
+        "bell-4",
+        "bell-5",
     ]
 
     private init() {
