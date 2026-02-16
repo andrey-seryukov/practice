@@ -14,6 +14,7 @@ struct MeditationView: View {
     @State private var timer = TimerEngine()
     @State private var phase: MeditationPhase = .idle
     @State private var sessionStartDate: Date?
+    @State private var nextGongThreshold: TimeInterval = 0
 
     private var settings: MeditationSettings {
         settingsItems.first ?? MeditationSettings()
@@ -43,6 +44,9 @@ struct MeditationView: View {
             } onFinished: {
                 onPhaseFinished()
             }
+            .onChange(of: timer.remainingTime) { _, remaining in
+                checkIntervalBell(remaining: remaining)
+            }
         }
     }
 
@@ -60,6 +64,13 @@ struct MeditationView: View {
         phase = .meditation
         timer.start(duration: settings.duration)
         SoundManager.shared.playSound(settings.startEndSound)
+
+        let interval = settings.intermediateGongInterval
+        if interval > 0 {
+            nextGongThreshold = settings.duration - interval
+        } else {
+            nextGongThreshold = 0
+        }
     }
 
     private func onPhaseFinished() {
@@ -71,6 +82,15 @@ struct MeditationView: View {
             SoundManager.shared.playSound(settings.startEndSound)
         default:
             break
+        }
+    }
+
+    private func checkIntervalBell(remaining: TimeInterval) {
+        guard phase == .meditation, nextGongThreshold > 0, remaining <= nextGongThreshold else { return }
+        SoundManager.shared.playSound(settings.intermediateSound)
+        nextGongThreshold -= settings.intermediateGongInterval
+        if nextGongThreshold <= 0 {
+            nextGongThreshold = 0
         }
     }
 
