@@ -5,6 +5,7 @@ struct TemplateEditorView: View {
     @Bindable var template: ActivityTemplate
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @State private var editingInterval: ActivityInterval?
 
     var body: some View {
         NavigationStack {
@@ -15,23 +16,24 @@ struct TemplateEditorView: View {
 
                 Section("Intervals") {
                     ForEach(template.sortedIntervals) { interval in
-                        HStack {
-                            TextField("Name", text: Binding(
-                                get: { interval.name },
-                                set: { interval.name = $0 }
-                            ))
-                            Spacer()
-                            Text(formatDuration(interval.duration))
-                                .foregroundStyle(.secondary)
-                            Stepper("",
-                                value: Binding(
-                                    get: { interval.duration },
-                                    set: { interval.duration = $0 }
-                                ),
-                                in: 5...3600,
-                                step: 5
-                            )
-                            .labelsHidden()
+                        TextField("Name", text: Binding(
+                            get: { interval.name },
+                            set: { interval.name = $0 }
+                        ))
+                        DurationRow(
+                            title: "Duration",
+                            duration: interval.duration,
+                            format: .minutesSeconds
+                        ) {
+                            editingInterval = interval
+                        }
+                        Picker("Sound", selection: Binding(
+                            get: { interval.sound },
+                            set: { interval.sound = $0 }
+                        )) {
+                            ForEach(SoundManager.availableSounds, id: \.self) { sound in
+                                Text(sound).tag(sound)
+                            }
                         }
                     }
                     .onDelete { indexSet in
@@ -58,6 +60,10 @@ struct TemplateEditorView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .sheet(item: $editingInterval) { interval in
+                IntervalDurationPickerSheet(interval: interval)
+                    .presentationDetents([.fraction(1.0 / 3.0)])
+            }
         }
     }
 
@@ -66,12 +72,36 @@ struct TemplateEditorView: View {
             interval.order = index
         }
     }
+}
 
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let total = Int(duration)
-        if total >= 60 {
-            return "\(total / 60)m \(total % 60)s"
+private struct IntervalDurationPickerSheet: View {
+    @Bindable var interval: ActivityInterval
+    @Environment(\.dismiss) private var dismiss
+
+    private var duration: Binding<TimeInterval> {
+        $interval.duration
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                HStack {
+                    Text(interval.name)
+                        .font(.headline)
+                    Spacer()
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+                .padding()
+
+                Spacer()
+
+                MinutesSecondsWheel(duration: duration)
+                    .frame(width: geometry.size.width * 0.67)
+
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
         }
-        return "\(total)s"
     }
 }
