@@ -5,7 +5,7 @@ struct ContentView: View {
         TabView {
             MeditationView()
                 .tabItem {
-                    Label("Meditation", systemImage: "bell")
+                    Label("Sit", systemImage: "bell")
                 }
 
             ActivityView()

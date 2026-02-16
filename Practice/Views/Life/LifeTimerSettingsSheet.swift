@@ -27,6 +27,28 @@ struct LifeTimerSettingsSheet: View {
     }
 }
 
+struct DurationPicker: View {
+    let title: String
+    @Binding var duration: TimeInterval
+    var range: ClosedRange<TimeInterval> = 0...7200
+
+    var body: some View {
+        let minutes = Binding<Double>(
+            get: { duration / 60 },
+            set: { duration = $0 * 60 }
+        )
+
+        HStack {
+            Text(title)
+            Spacer()
+            Text("\(Int(minutes.wrappedValue)) min")
+                .foregroundStyle(.secondary)
+            Stepper("", value: minutes, in: (range.lowerBound / 60)...(range.upperBound / 60), step: 1)
+                .labelsHidden()
+        }
+    }
+}
+
 struct HourMinutePicker: View {
     let title: String
     @Binding var duration: TimeInterval

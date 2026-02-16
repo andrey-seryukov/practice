@@ -30,7 +30,7 @@ struct MeditationView: View {
                     }
                 }
             }
-            .navigationTitle("Meditation")
+            .navigationTitle("Sitting Practice")
             .onAppear {
                 ensureSettings()
             }
