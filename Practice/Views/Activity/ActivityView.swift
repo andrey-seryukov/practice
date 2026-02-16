@@ -71,10 +71,19 @@ struct ActivityView: View {
 
     // MARK: - Idle Components
 
+    private var selectedTemplateID: Binding<PersistentIdentifier?> {
+        Binding(
+            get: { selectedTemplate?.persistentModelID },
+            set: { newID in
+                selectedTemplate = templates.first { $0.persistentModelID == newID }
+            }
+        )
+    }
+
     private var templatePicker: some View {
-        Picker("Template", selection: $selectedTemplate) {
+        Picker("Template", selection: selectedTemplateID) {
             ForEach(templates) { template in
-                Text(template.name).tag(Optional(template))
+                Text(template.name).tag(Optional(template.persistentModelID))
             }
         }
         .pickerStyle(.menu)
@@ -198,7 +207,7 @@ struct ActivityView: View {
             return
         }
 
-        let hiit = ActivityTemplate(name: "HIIT", intervals: [], isPreset: true)
+        let hiit = ActivityTemplate(name: "HIIT", intervals: [])
         for round in 0..<8 {
             hiit.intervals.append(ActivityInterval(name: "Work \(round + 1)", duration: 30, order: round * 2))
             hiit.intervals.append(ActivityInterval(name: "Rest \(round + 1)", duration: 15, order: round * 2 + 1))
@@ -208,13 +217,13 @@ struct ActivityView: View {
             ActivityInterval(name: "Warm-up", duration: 300, order: 0),
             ActivityInterval(name: "Flow", duration: 1200, order: 1),
             ActivityInterval(name: "Cool-down", duration: 300, order: 2),
-        ], isPreset: true)
+        ])
 
         let chiGong = ActivityTemplate(name: "Chi Gong", intervals: [
             ActivityInterval(name: "Warm-up", duration: 600, order: 0),
             ActivityInterval(name: "Practice", duration: 1800, order: 1),
             ActivityInterval(name: "Cool-down", duration: 300, order: 2),
-        ], isPreset: true)
+        ])
 
         modelContext.insert(hiit)
         modelContext.insert(yoga)

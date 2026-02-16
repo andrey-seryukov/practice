@@ -18,30 +18,21 @@ struct TemplateListView: View {
                         dismiss()
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(template.name)
-                                    .font(.headline)
-                                if template.isPreset {
-                                    Text("Preset")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(.fill, in: Capsule())
-                                }
-                            }
+                            Text(template.name)
+                                .font(.headline)
                             Text("\(template.intervals.count) intervals")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                     }
                     .swipeActions(edge: .trailing) {
-                        if !template.isPreset {
-                            Button(role: .destructive) {
-                                modelContext.delete(template)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+                        Button(role: .destructive) {
+                            if selectedTemplate == template {
+                                selectedTemplate = nil
                             }
+                            modelContext.delete(template)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
                         Button {
                             editingTemplate = template
