@@ -12,20 +12,20 @@ struct LifeTimerView: View {
         settingsItems.first ?? LifeTimerSettings()
     }
 
+    private var isTimerActive: Bool {
+        timer.state != .idle
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 40) {
                 Spacer()
 
-                timerDisplay
+                Text(formatTime(settings.totalDuration))
+                    .font(.system(size: 64, weight: .thin, design: .monospaced))
 
-                if timer.state == .running {
-                    Text("Next reminder in \(formatTime(nextReminderIn))")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                controls
+                Button("Start") { startLifeTimer() }
+                    .font(.title2)
 
                 Spacer()
             }
@@ -46,21 +46,34 @@ struct LifeTimerView: View {
                 ensureSettings()
             }
         }
+        .fullScreenCover(isPresented: .constant(isTimerActive)) {
+            lifeTimerScreen
+        }
     }
 
-    private var timerDisplay: some View {
-        Text(formatTime(timer.state == .idle ? settings.totalDuration : timer.remainingTime))
-            .font(.system(size: 64, weight: .thin, design: .monospaced))
-            .contentTransition(.numericText())
+    private var lifeTimerScreen: some View {
+        VStack(spacing: 40) {
+            Spacer()
+
+            Text(formatTime(timer.remainingTime))
+                .font(.system(size: 64, weight: .thin, design: .monospaced))
+                .contentTransition(.numericText())
+
+            if timer.state == .running {
+                Text("Next reminder in \(formatTime(nextReminderIn))")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            activeControls
+
+            Spacer()
+        }
     }
 
     @ViewBuilder
-    private var controls: some View {
+    private var activeControls: some View {
         switch timer.state {
-        case .idle:
-            Button("Start") { startLifeTimer() }
-                .font(.title2)
-
         case .running:
             HStack(spacing: 40) {
                 Button("Pause") { timer.pause() }
@@ -82,6 +95,9 @@ struct LifeTimerView: View {
                 Button("Done") { timer.stop() }
                     .font(.title2)
             }
+
+        case .idle:
+            EmptyView()
         }
     }
 

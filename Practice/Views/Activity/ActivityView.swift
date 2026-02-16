@@ -16,6 +16,10 @@ struct ActivityView: View {
         return selectedTemplate.intervals[currentIntervalIndex]
     }
 
+    private var isTimerActive: Bool {
+        timer.state != .idle
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 32) {
@@ -23,8 +27,9 @@ struct ActivityView: View {
 
                 if let selectedTemplate {
                     templateHeader(selectedTemplate)
-                    timerDisplay
-                    controls
+                    idleTimerDisplay
+                    Button("Start") { startActivity() }
+                        .font(.title2)
                 } else {
                     noTemplateSelected
                 }
@@ -48,35 +53,37 @@ struct ActivityView: View {
                 seedPresetsIfNeeded()
             }
         }
-    }
-
-    private func templateHeader(_ template: ActivityTemplate) -> some View {
-        VStack(spacing: 8) {
-            Text(template.name)
-                .font(.headline)
-            if let interval = currentInterval, timer.state != .idle {
-                Text(interval.name)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+        .fullScreenCover(isPresented: .constant(isTimerActive)) {
+            activityTimerScreen
         }
     }
 
-    private var timerDisplay: some View {
-        Text(formatTime(timer.state == .idle
-            ? (currentInterval?.duration ?? 0)
-            : timer.remainingTime))
+    private var idleTimerDisplay: some View {
+        Text(formatTime(currentInterval?.duration ?? 0))
             .font(.system(size: 64, weight: .thin, design: .monospaced))
-            .contentTransition(.numericText())
+    }
+
+    private var activityTimerScreen: some View {
+        VStack(spacing: 32) {
+            Spacer()
+
+            if let selectedTemplate {
+                templateHeader(selectedTemplate)
+            }
+
+            Text(formatTime(timer.remainingTime))
+                .font(.system(size: 64, weight: .thin, design: .monospaced))
+                .contentTransition(.numericText())
+
+            activeControls
+
+            Spacer()
+        }
     }
 
     @ViewBuilder
-    private var controls: some View {
+    private var activeControls: some View {
         switch timer.state {
-        case .idle:
-            Button("Start") { startActivity() }
-                .font(.title2)
-
         case .running:
             HStack(spacing: 40) {
                 Button("Pause") { timer.pause() }
@@ -97,6 +104,21 @@ struct ActivityView: View {
                     .font(.title3)
                 Button("Continue") { advanceInterval() }
                     .font(.title2)
+            }
+
+        case .idle:
+            EmptyView()
+        }
+    }
+
+    private func templateHeader(_ template: ActivityTemplate) -> some View {
+        VStack(spacing: 8) {
+            Text(template.name)
+                .font(.headline)
+            if let interval = currentInterval, timer.state != .idle {
+                Text(interval.name)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
         }
     }

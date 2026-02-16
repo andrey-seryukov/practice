@@ -25,26 +25,23 @@ struct MeditationView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if isActive {
-                    MeditationTimerView(
-                        timer: timer,
-                        settings: settings,
-                        phase: phase
-                    ) {
-                        stopTimer()
-                    } onFinished: {
-                        onPhaseFinished()
-                    }
-                } else {
-                    MeditationSettingsForm(settings: settings) {
-                        startSession()
-                    }
-                }
+            MeditationSettingsForm(settings: settings) {
+                startSession()
             }
             .navigationTitle("Sitting Practice")
             .onAppear {
                 ensureSettings()
+            }
+        }
+        .fullScreenCover(isPresented: .constant(isActive)) {
+            MeditationTimerView(
+                timer: timer,
+                settings: settings,
+                phase: phase
+            ) {
+                stopTimer()
+            } onFinished: {
+                onPhaseFinished()
             }
         }
     }
