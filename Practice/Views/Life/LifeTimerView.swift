@@ -24,8 +24,7 @@ struct LifeTimerView: View {
                 Text(formatTime(settings.totalDuration))
                     .font(.system(size: 64, weight: .thin, design: .monospaced))
 
-                Button("Start") { startLifeTimer() }
-                    .font(.title2)
+                TimerButton(style: .start) { startLifeTimer() }
 
                 Spacer()
             }
@@ -76,24 +75,21 @@ struct LifeTimerView: View {
         switch timer.state {
         case .running:
             HStack(spacing: 40) {
-                Button("Pause") { timer.pause() }
-                Button("Stop", role: .destructive) { stopLifeTimer() }
+                TimerButton(style: .pause) { timer.pause() }
+                TimerButton(style: .stop) { stopLifeTimer() }
             }
-            .font(.title2)
 
         case .paused:
             HStack(spacing: 40) {
-                Button("Resume") { timer.resume() }
-                Button("Stop", role: .destructive) { stopLifeTimer() }
+                TimerButton(style: .resume) { timer.resume() }
+                TimerButton(style: .stop) { stopLifeTimer() }
             }
-            .font(.title2)
 
         case .finished:
             VStack(spacing: 16) {
                 Text("Time's Up")
                     .font(.title3)
-                Button("Done") { timer.stop() }
-                    .font(.title2)
+                TimerButton(style: .done) { timer.stop() }
             }
 
         case .idle:

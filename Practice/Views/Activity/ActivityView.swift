@@ -28,8 +28,7 @@ struct ActivityView: View {
                 if let selectedTemplate {
                     templateHeader(selectedTemplate)
                     idleTimerDisplay
-                    Button("Start") { startActivity() }
-                        .font(.title2)
+                    TimerButton(style: .start) { startActivity() }
                 } else {
                     noTemplateSelected
                 }
@@ -86,24 +85,21 @@ struct ActivityView: View {
         switch timer.state {
         case .running:
             HStack(spacing: 40) {
-                Button("Pause") { timer.pause() }
-                Button("Stop", role: .destructive) { stopActivity() }
+                TimerButton(style: .pause) { timer.pause() }
+                TimerButton(style: .stop) { stopActivity() }
             }
-            .font(.title2)
 
         case .paused:
             HStack(spacing: 40) {
-                Button("Resume") { timer.resume() }
-                Button("Stop", role: .destructive) { stopActivity() }
+                TimerButton(style: .resume) { timer.resume() }
+                TimerButton(style: .stop) { stopActivity() }
             }
-            .font(.title2)
 
         case .finished:
             VStack(spacing: 16) {
                 Text("Interval Complete")
                     .font(.title3)
-                Button("Continue") { advanceInterval() }
-                    .font(.title2)
+                TimerButton(style: .start) { advanceInterval() }
             }
 
         case .idle:

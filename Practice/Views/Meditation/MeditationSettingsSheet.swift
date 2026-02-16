@@ -96,24 +96,21 @@ struct MeditationTimerView: View {
     private var controls: some View {
         switch phase {
         case .warmup:
-            Button("Stop", role: .destructive) { onStop() }
-                .font(.title2)
+            TimerButton(style: .stop) { onStop() }
 
         case .meditation:
             switch timer.state {
             case .running:
                 HStack(spacing: 40) {
-                    Button("Pause") { timer.pause() }
-                    Button("Stop", role: .destructive) { onStop() }
+                    TimerButton(style: .pause) { timer.pause() }
+                    TimerButton(style: .stop) { onStop() }
                 }
-                .font(.title2)
 
             case .paused:
                 HStack(spacing: 40) {
-                    Button("Resume") { timer.resume() }
-                    Button("Stop", role: .destructive) { onStop() }
+                    TimerButton(style: .resume) { timer.resume() }
+                    TimerButton(style: .stop) { onStop() }
                 }
-                .font(.title2)
 
             case .finished, .idle:
                 EmptyView()
@@ -123,8 +120,7 @@ struct MeditationTimerView: View {
             VStack(spacing: 16) {
                 Text("Session Complete")
                     .font(.title3)
-                Button("Done") { onStop() }
-                    .font(.title2)
+                TimerButton(style: .done) { onStop() }
             }
 
         case .idle:
