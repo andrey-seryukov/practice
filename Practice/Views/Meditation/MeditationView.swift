@@ -1,10 +1,18 @@
 import SwiftUI
 import SwiftData
 
+enum MeditationPhase {
+    case idle
+    case warmup
+    case meditation
+    case finished
+}
+
 struct MeditationView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsItems: [MeditationSettings]
     @State private var timer = TimerEngine()
+    @State private var phase: MeditationPhase = .idle
     @State private var sessionStartDate: Date?
 
     private var settings: MeditationSettings {
@@ -12,21 +20,25 @@ struct MeditationView: View {
     }
 
     private var isActive: Bool {
-        timer.state == .running || timer.state == .paused || timer.state == .finished
+        phase != .idle
     }
 
     var body: some View {
         NavigationStack {
             Group {
                 if isActive {
-                    MeditationTimerView(timer: timer, settings: settings) {
+                    MeditationTimerView(
+                        timer: timer,
+                        settings: settings,
+                        phase: phase
+                    ) {
                         stopTimer()
                     } onFinished: {
-                        onSessionFinished()
+                        onPhaseFinished()
                     }
                 } else {
                     MeditationSettingsForm(settings: settings) {
-                        startTimer()
+                        startSession()
                     }
                 }
             }
@@ -37,19 +49,38 @@ struct MeditationView: View {
         }
     }
 
-    private func startTimer() {
+    private func startSession() {
         sessionStartDate = Date()
+        if settings.warmupDuration > 0 {
+            phase = .warmup
+            timer.start(duration: settings.warmupDuration)
+        } else {
+            startMeditation()
+        }
+    }
+
+    private func startMeditation() {
+        phase = .meditation
         timer.start(duration: settings.duration)
         SoundManager.shared.playSound(settings.startEndSound)
     }
 
-    private func stopTimer() {
-        timer.stop()
-        sessionStartDate = nil
+    private func onPhaseFinished() {
+        switch phase {
+        case .warmup:
+            startMeditation()
+        case .meditation:
+            phase = .finished
+            SoundManager.shared.playSound(settings.startEndSound)
+        default:
+            break
+        }
     }
 
-    private func onSessionFinished() {
-        SoundManager.shared.playSound(settings.startEndSound)
+    private func stopTimer() {
+        timer.stop()
+        phase = .idle
+        sessionStartDate = nil
     }
 
     private func ensureSettings() {
