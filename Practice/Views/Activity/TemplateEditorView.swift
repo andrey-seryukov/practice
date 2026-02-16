@@ -14,7 +14,7 @@ struct TemplateEditorView: View {
                 }
 
                 Section("Intervals") {
-                    ForEach(template.intervals) { interval in
+                    ForEach(template.sortedIntervals) { interval in
                         HStack {
                             TextField("Name", text: Binding(
                                 get: { interval.name },
@@ -35,15 +35,18 @@ struct TemplateEditorView: View {
                         }
                     }
                     .onDelete { indexSet in
+                        let sorted = template.sortedIntervals
                         for index in indexSet {
-                            let interval = template.intervals[index]
-                            template.intervals.remove(at: index)
+                            let interval = sorted[index]
+                            template.intervals.removeAll { $0.id == interval.id }
                             modelContext.delete(interval)
                         }
+                        reorderIntervals()
                     }
 
                     Button("Add Interval") {
-                        let interval = ActivityInterval(name: "Interval", duration: 30)
+                        let nextOrder = (template.intervals.map(\.order).max() ?? -1) + 1
+                        let interval = ActivityInterval(name: "Interval", duration: 30, order: nextOrder)
                         template.intervals.append(interval)
                     }
                 }
@@ -55,6 +58,12 @@ struct TemplateEditorView: View {
                     Button("Done") { dismiss() }
                 }
             }
+        }
+    }
+
+    private func reorderIntervals() {
+        for (index, interval) in template.sortedIntervals.enumerated() {
+            interval.order = index
         }
     }
 

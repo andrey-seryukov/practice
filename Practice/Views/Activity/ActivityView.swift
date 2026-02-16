@@ -9,11 +9,13 @@ struct ActivityView: View {
     @State private var currentIntervalIndex = 0
     @State private var showTemplateList = false
 
+    private var sortedIntervals: [ActivityInterval] {
+        selectedTemplate?.sortedIntervals ?? []
+    }
+
     private var currentInterval: ActivityInterval? {
-        guard let selectedTemplate,
-              currentIntervalIndex < selectedTemplate.intervals.count
-        else { return nil }
-        return selectedTemplate.intervals[currentIntervalIndex]
+        guard currentIntervalIndex < sortedIntervals.count else { return nil }
+        return sortedIntervals[currentIntervalIndex]
     }
 
     private var isTimerActive: Bool {
@@ -54,6 +56,11 @@ struct ActivityView: View {
         }
         .fullScreenCover(isPresented: .constant(isTimerActive)) {
             activityTimerScreen
+                .onChange(of: timer.state) { _, newState in
+                    if newState == .finished {
+                        advanceInterval()
+                    }
+                }
         }
     }
 
@@ -95,14 +102,7 @@ struct ActivityView: View {
                 TimerButton(style: .stop) { stopActivity() }
             }
 
-        case .finished:
-            VStack(spacing: 16) {
-                Text("Interval Complete")
-                    .font(.title3)
-                TimerButton(style: .start) { advanceInterval() }
-            }
-
-        case .idle:
+        case .finished, .idle:
             EmptyView()
         }
     }
@@ -137,9 +137,8 @@ struct ActivityView: View {
     }
 
     private func advanceInterval() {
-        guard let selectedTemplate else { return }
         currentIntervalIndex += 1
-        if currentIntervalIndex < selectedTemplate.intervals.count {
+        if currentIntervalIndex < sortedIntervals.count {
             startActivity()
         } else {
             currentIntervalIndex = 0
@@ -156,21 +155,21 @@ struct ActivityView: View {
         guard templates.isEmpty else { return }
 
         let hiit = ActivityTemplate(name: "HIIT", intervals: [], isPreset: true)
-        for round in 1...8 {
-            hiit.intervals.append(ActivityInterval(name: "Work \(round)", duration: 30))
-            hiit.intervals.append(ActivityInterval(name: "Rest \(round)", duration: 15))
+        for round in 0..<8 {
+            hiit.intervals.append(ActivityInterval(name: "Work \(round + 1)", duration: 30, order: round * 2))
+            hiit.intervals.append(ActivityInterval(name: "Rest \(round + 1)", duration: 15, order: round * 2 + 1))
         }
 
         let yoga = ActivityTemplate(name: "Yoga Flow", intervals: [
-            ActivityInterval(name: "Warm-up", duration: 300),
-            ActivityInterval(name: "Flow", duration: 1200),
-            ActivityInterval(name: "Cool-down", duration: 300),
+            ActivityInterval(name: "Warm-up", duration: 300, order: 0),
+            ActivityInterval(name: "Flow", duration: 1200, order: 1),
+            ActivityInterval(name: "Cool-down", duration: 300, order: 2),
         ], isPreset: true)
 
         let chiGong = ActivityTemplate(name: "Chi Gong", intervals: [
-            ActivityInterval(name: "Warm-up", duration: 600),
-            ActivityInterval(name: "Practice", duration: 1800),
-            ActivityInterval(name: "Cool-down", duration: 300),
+            ActivityInterval(name: "Warm-up", duration: 600, order: 0),
+            ActivityInterval(name: "Practice", duration: 1800, order: 1),
+            ActivityInterval(name: "Cool-down", duration: 300, order: 2),
         ], isPreset: true)
 
         modelContext.insert(hiit)
