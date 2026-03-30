@@ -48,15 +48,10 @@ struct LifeTimerSettingsForm: View {
                 SoundPicker(title: "Reminder", selection: $settings.reminderSound)
             }
 
-            Section {
-                Button {
-                    onStart()
-                } label: {
-                    Text("Start")
-                        .frame(maxWidth: .infinity)
-                }
-                .font(.title2)
-            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            TimerButton(style: .start) { onStart() }
+                .padding(.bottom, 32)
         }
         .sheet(item: $activePicker) { kind in
             LifeDurationPickerSheet(kind: kind, settings: settings)

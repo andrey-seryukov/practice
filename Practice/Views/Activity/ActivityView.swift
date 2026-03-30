@@ -77,7 +77,7 @@ struct ActivityView: View {
 
     private var selectedTemplateID: Binding<PersistentIdentifier?> {
         Binding(
-            get: { selectedTemplate?.persistentModelID },
+            get: { (selectedTemplate ?? templates.first)?.persistentModelID },
             set: { newID in
                 selectedTemplate = templates.first { $0.persistentModelID == newID }
             }

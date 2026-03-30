@@ -27,15 +27,10 @@ struct MeditationSettingsForm: View {
                 SoundPicker(title: "Sound", selection: $settings.intermediateSound)
             }
 
-            Section {
-                Button {
-                    onStart()
-                } label: {
-                    Text("Start")
-                        .frame(maxWidth: .infinity)
-                }
-                .font(.title2)
-            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            TimerButton(style: .start) { onStart() }
+                .padding(.bottom, 32)
         }
         .sheet(item: $activePicker) { kind in
             DurationPickerSheet(kind: kind, settings: settings)
