@@ -13,7 +13,7 @@ final class TimerEngine {
     private(set) var remainingTime: TimeInterval = 0
     private(set) var state: TimerState = .idle
 
-    private var targetDate: Date?
+    private(set) var targetDate: Date?
     private var timer: Timer?
     private var pausedRemaining: TimeInterval = 0
 

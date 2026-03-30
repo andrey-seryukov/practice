@@ -3,6 +3,7 @@ import SwiftData
 
 struct LifeTimerView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var settingsItems: [LifeTimerSettings]
     @State private var timer = TimerEngine()
     @State private var reminderDates: [Date] = []
@@ -28,6 +29,9 @@ struct LifeTimerView: View {
         }
         .fullScreenCover(isPresented: .constant(isTimerActive)) {
             lifeTimerScreen
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            handleScenePhase(newPhase)
         }
     }
 
@@ -85,6 +89,25 @@ struct LifeTimerView: View {
 
         case .idle:
             EmptyView()
+        }
+    }
+
+    private func handleScenePhase(_ newPhase: ScenePhase) {
+        guard timer.state == .running else { return }
+        switch newPhase {
+        case .background:
+            if let target = timer.targetDate {
+                NotificationManager.shared.scheduleTimerCompletion(
+                    at: target,
+                    title: "Life Timer Complete",
+                    sound: settings.startStopSound
+                )
+            }
+        case .active:
+            NotificationManager.shared.cancelTimerCompletion()
+            timer.recalculateFromBackground()
+        default:
+            break
         }
     }
 

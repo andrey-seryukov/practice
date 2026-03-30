@@ -6,6 +6,9 @@ struct PracticeApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                    _ = await NotificationManager.shared.requestAuthorization()
+                }
         }
         .modelContainer(for: [
             MeditationSettings.self,

@@ -10,6 +10,7 @@ enum MeditationPhase {
 
 struct MeditationView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var settingsItems: [MeditationSettings]
     @State private var timer = TimerEngine()
     @State private var phase: MeditationPhase = .idle
@@ -48,6 +49,17 @@ struct MeditationView: View {
                 checkIntervalBell(remaining: remaining)
             }
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            handleScenePhase(newPhase)
+        }
+        .onChange(of: timer.state) { oldState, newState in
+            if oldState == .running && newState == .paused {
+                NotificationManager.shared.cancelIntervalBells()
+                NotificationManager.shared.cancelTimerCompletion()
+            } else if oldState == .paused && newState == .running && phase == .meditation {
+                scheduleIntervalBellNotifications()
+            }
+        }
     }
 
     private func startSession() {
@@ -71,6 +83,8 @@ struct MeditationView: View {
         } else {
             nextGongThreshold = 0
         }
+
+        scheduleIntervalBellNotifications()
     }
 
     private func onPhaseFinished() {
@@ -94,10 +108,52 @@ struct MeditationView: View {
         }
     }
 
+    private func handleScenePhase(_ newPhase: ScenePhase) {
+        guard timer.state == .running else { return }
+        switch newPhase {
+        case .background:
+            if let target = timer.targetDate {
+                NotificationManager.shared.scheduleTimerCompletion(
+                    at: target,
+                    title: phase == .warmup ? "Warm-up Complete" : "Meditation Complete",
+                    sound: settings.startEndSound
+                )
+            }
+        case .active:
+            NotificationManager.shared.cancelTimerCompletion()
+            timer.recalculateFromBackground()
+            syncGongThreshold()
+        default:
+            break
+        }
+    }
+
+    private func syncGongThreshold() {
+        guard phase == .meditation else { return }
+        let interval = settings.intermediateGongInterval
+        guard interval > 0 else { return }
+        while nextGongThreshold > 0 && timer.remainingTime <= nextGongThreshold {
+            nextGongThreshold -= interval
+        }
+        if nextGongThreshold < 0 { nextGongThreshold = 0 }
+    }
+
+    private func scheduleIntervalBellNotifications() {
+        guard let target = timer.targetDate else { return }
+        NotificationManager.shared.scheduleIntervalBells(
+            targetDate: target,
+            duration: settings.duration,
+            interval: settings.intermediateGongInterval,
+            sound: settings.intermediateSound
+        )
+    }
+
     private func stopTimer() {
         timer.stop()
         phase = .idle
         sessionStartDate = nil
+        NotificationManager.shared.cancelTimerCompletion()
+        NotificationManager.shared.cancelIntervalBells()
     }
 
     private func ensureSettings() {

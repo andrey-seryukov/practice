@@ -3,6 +3,7 @@ import SwiftData
 
 struct ActivityView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var templates: [ActivityTemplate]
     @State private var selectedTemplate: ActivityTemplate?
     @State private var timer = TimerEngine()
@@ -66,6 +67,9 @@ struct ActivityView: View {
                         advanceInterval()
                     }
                 }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            handleScenePhase(newPhase)
         }
     }
 
@@ -194,9 +198,30 @@ struct ActivityView: View {
         }
     }
 
+    private func handleScenePhase(_ newPhase: ScenePhase) {
+        guard timer.state == .running else { return }
+        switch newPhase {
+        case .background:
+            if let target = timer.targetDate {
+                let sound = currentInterval?.sound
+                NotificationManager.shared.scheduleTimerCompletion(
+                    at: target,
+                    title: currentInterval?.name ?? "Interval Complete",
+                    sound: sound
+                )
+            }
+        case .active:
+            NotificationManager.shared.cancelTimerCompletion()
+            timer.recalculateFromBackground()
+        default:
+            break
+        }
+    }
+
     private func stopActivity() {
         timer.stop()
         currentIntervalIndex = 0
+        NotificationManager.shared.cancelTimerCompletion()
     }
 
     private func seedPresetsIfNeeded() {
